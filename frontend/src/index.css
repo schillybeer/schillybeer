@@ -4,8 +4,12 @@
   --border-color: rgba(255, 255, 255, 0.1);
   --primary-color: #00f2fe;
   --secondary-color: #4facfe;
+  --bg-dark: #0a0a0c;
+  --panel-bg: #16161a;
+  --text-main: #ffffff;
   --text-primary: #ffffff;
   --text-secondary: #94a3b8;
+  --accent-glow: rgba(0, 242, 254, 0.3);
   font-family: 'Inter', system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
@@ -142,4 +146,88 @@ button:active {
   border-left: 4px solid var(--primary-color);
   border-radius: 4px;
   font-weight: 500;
+}
+
+/* TUNER STYLES */
+.tuner-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 1.5rem;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 12px;
+  margin-top: 1rem;
+}
+
+.tuner-note {
+  font-size: 3.5rem;
+  font-weight: 800;
+  color: var(--primary-color);
+  text-shadow: 0 0 20px var(--accent-glow);
+  margin-bottom: 0.5rem;
+  transition: all 0.2s ease;
+}
+
+.tuner-note.in-tune {
+  color: #00ff88;
+  text-shadow: 0 0 30px rgba(0, 255, 136, 0.5);
+}
+
+.tuner-display {
+  width: 100%;
+  height: 60px;
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.05) 50%, transparent 100%);
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.tuner-scale {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: space-between;
+  padding: 0 10px;
+  align-items: flex-end;
+}
+
+.scale-tick {
+  width: 2px;
+  height: 10px;
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.scale-tick.center {
+  height: 20px;
+  background: #00ff88;
+  box-shadow: 0 0 10px rgba(0, 255, 136, 0.5);
+}
+
+.tuner-needle {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 4px;
+  height: 100%;
+  background: var(--primary-color);
+  box-shadow: 0 0 15px var(--primary-color);
+  border-radius: 2px;
+  transition: transform 0.1s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  transform-origin: bottom center;
+}
+
+.tuner-needle.in-tune {
+  background: #00ff88;
+  box-shadow: 0 0 20px #00ff88;
+}
+
+.tuner-info {
+  margin-top: 1rem;
+  font-family: monospace;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
 }
