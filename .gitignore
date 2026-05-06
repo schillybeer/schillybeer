@@ -1,0 +1,22 @@
+# Secrets
+.env
+*.env
+backend/.env
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.venv/
+env/
+
+# Node
+node_modules/
+dist/
+.DS_Store
+
+# Audio Assets (Huge files)
+backend/irs/*.wav
+backend/plugins/*.vst3
+backend/NAM_Installer.zip
