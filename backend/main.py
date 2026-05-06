@@ -7,11 +7,26 @@ from google import genai
 from google.genai import types
 from dotenv import load_dotenv
 from audio_engine import engine
+from tone_library import ARTIST_PRESETS
 
 # Load environment variables from .env file (if it exists)
 load_dotenv()
 
-app = FastAPI(title="Schillybeer Brain API", description="AI Guitar Pedal Dashboard API")
+from contextlib import asynccontextmanager
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Start the audio engine when the server starts
+    engine.start()
+    yield
+    # Stop the engine when the server shuts down
+    engine.stop()
+
+app = FastAPI(
+    title="Schillybeer Brain API", 
+    description="AI Guitar Pedal Dashboard API",
+    lifespan=lifespan
+)
 
 # Allow frontend to connect
 app.add_middleware(
@@ -76,59 +91,53 @@ def get_tuner():
 @app.post("/api/tone/prompt")
 def prompt_tone(request: TonePrompt):
     api_key = os.environ.get("GEMINI_API_KEY", "").strip()
-    if not api_key:
-        raise HTTPException(status_code=500, detail="GEMINI_API_KEY is not set on the server.")
-
     client = genai.Client(api_key=api_key)
     
     system_instruction = """
-    You are the brain of a smart guitar pedal called Schillybeer.
-    The user will describe a guitar tone they want (e.g., 'church organ', '12 string guitar', '80s Metallica').
-    You must dynamically build a digital signal processing (DSP) chain to create this sound using the following available effects:
-    - Chorus(rate_hz, depth, mix)
-    - Reverb(room_size, wet_level, dry_level)
-    - Distortion(drive_db) (CRUCIAL: Use this for ALL heavy metal, rock, and crunch tones!)
-    - Gain(gain_db) (Use this AFTER distortion to make it loud and aggressive!)
-    - Phaser(rate_hz, mix)
-    - Delay(delay_seconds, feedback, mix)
-    - PitchShift(semitones)
-    - LowpassFilter(cutoff_frequency_hz)
-    - Bitcrush(bit_depth) (PERFECT for that 80s lo-fi floppy disk sound. Use bit_depth=8 for maximum crunch!)
-    - Convolution(ir_name, mix) (Texturizes the guitar with a snapshot.)
-    - Sampler(sample_name) (TRULY COMICAL: The guitar triggers and plays the actual audio file like an 80s keyboard sampler!)
-    - Mix(chains) (takes an array of arrays. Crucial for blending octaves!)
+    You are the Lead Sound Librarian and Senior DSP Engineer for the Schillybeer Quantum Rig.
+    Your goal is to provide ultra-accurate guitar tones by using verified 'Gold Standard' templates as a base layer.
     
-    NON-MUSICAL SOUND LIBRARY:
-    - 'fart_resonance.wav': Use with Sampler() for a comical farting guitar.
-    - 'laser.wav', 'explosion.wav', 'coin.wav', 'powerup.wav': Retro arcade pack.
-    - 'wow.wav', 'robot_hey.wav', 'hey_hit.wav': Vocal effects.
-    - '808_kick.wav', '808_snare.wav', 'cowbell.wav': Drum machine pack.
-    - 'synth_stab.wav', 'orch_hit.wav': Classic 80s sampler hits.
-    - 'lofi_piano.wav', 'lofi_strings.wav': Instrument pack.
-    - 'washing_machine.wav', 'robotic_drone.wav', 'metallic_clang.wav', 'alien_chatter.wav'
+    MASTER TONE LIBRARY (Reference these for artist requests):
+    {artist_library_summary}
     
-    AUDIO ENGINEERING RULES:
-    1. For COMICAL Farts: ALWAYS use Sampler('fart_resonance.wav').
-    2. For Retro Arcade: Use Sampler('laser.wav' or 'coin.wav') + Delay(delay_seconds=0.1, feedback=0.4, mix=0.5).
-    3. For 80s Sampler Feel: Use Sampler('synth_stab.wav' or 'orch_hit.wav') + Bitcrush(bit_depth=8).
-    4. For Heavy Metal: Use Distortion(drive_db=30-50) + Gain(gain_db=15).
-    5. For 12-String: Use Mix(chains=[[], [{"effect": "PitchShift", "semitones": 12}]]).
-    6. PitchShift is 100% wet. ALWAYS use Mix() for parallel octaves.
-    7. Be Bold: Crank the mix and wet_level parameters to 0.7-1.0 for wacky effects!
+    AVAILABLE DSP COMPONENTS:
+    - Compressor(threshold_db, ratio): Use at start for consistency.
+    - Distortion(drive_db): High-gain saturation.
+    - NAM_Amp(): High-end Algorithmic Amp. ALWAYS use this for realistic amp tones.
+    - Convolution(ir_name, mix): Cabinet simulation ('vintage_4x12.wav').
+    - Chorus(rate_hz, depth, mix): Modulation.
+    - Reverb(room_size, wet_level): Spatial depth.
+    - Delay(delay_seconds, feedback, mix): Echo.
+    - PitchShift(semitones): Harmonic shifting.
+    - Gain(gain_db): Final level adjustment.
+    - PeakFilter(cutoff_hz, gain_db, q): Surgical frequency adjustment.
+    - LowpassFilter/HighpassFilter: Tonal balancing.
+    - Phaser(rate_hz, mix): Movement.
+    - Sampler(sample_name): Trigger sound effects (e.g., 'laser.wav', 'explosion.wav', 'space_drone.wav').
     
-    Return ONLY a raw JSON object with exactly three keys:
-    "suggested_preset": a short, creative 2-4 word name for the custom tone you just built.
-    "chain": an array of effect objects. 
-    "message": a short, fun 1-sentence confirmation.
+    PROFESSIONAL WORKFLOW:
+    1. If the user mentions a specific artist (e.g., 'Ted Nugent', 'SRV'), START with their verified chain from the library.
+    2. TONE MORPHING: If multiple artists are mentioned (e.g., 'Nugent + B.B. King'), blend their key characteristics (e.g., Nugent's bite + King's smooth mid-hump).
+    3. CREATIVE OVERLAY: If the user adds a theme (e.g., 'in space', 'with lasers'), keep the artist's base tone but add the thematic DSP (e.g., Large Reverb + Sampler('laser.wav')).
+    4. PRECISION: Use technical terms in your 'message' to confirm you've matched the reference template.
+    
+    Return ONLY a raw JSON object:
+    "suggested_preset": Descriptive name.
+    "chain": array of effect objects.
+    "message": Technical explanation of how you matched the reference and added the 'special sauce'.
     """
 
     try:
+        # Dynamically inject the artist library summary
+        library_summary = "\n".join([f"- {name}: {info['description']}" for name, info in ARTIST_PRESETS.items()])
+        formatted_instruction = system_instruction.format(artist_library_summary=library_summary)
+        
         # Upgraded to Gemini 3 Flash for cutting-edge DSP chain generation
         response = client.models.generate_content(
             model='gemini-3-flash-preview',
             contents=request.prompt,
             config=types.GenerateContentConfig(
-                system_instruction=system_instruction,
+                system_instruction=formatted_instruction,
                 temperature=0.2, # Low temperature for more deterministic preset mapping
             )
         )
@@ -232,16 +241,50 @@ def change_preset(request: PresetChange):
         "message": f"Successfully loaded preset: {request.preset_name}"
     }
 
-# Start the audio engine when the server starts
-@app.on_event("startup")
-def startup_event():
-    engine.load_di_track("di_loop.wav")
-    engine.start()
+@app.get("/api/tones/library")
+def get_tone_library():
+    """Returns the list of available verified artist templates."""
+    return {
+        "artists": [
+            {"id": name, "name": name.replace("_", " ").title(), "description": info["description"]}
+            for name, info in ARTIST_PRESETS.items()
+        ]
+    }
 
-@app.on_event("shutdown")
-def shutdown_event():
-    engine.stop()
+@app.post("/api/engine/toggle")
+def toggle_engine_feature(request: dict):
+    """Toggles specific engine features like NDE or PAGH."""
+    feature = request.get("feature")
+    if feature == "nde":
+        engine.nde_enabled = not engine.nde_enabled
+        state = engine.nde_enabled
+    elif feature == "pagh":
+        # Placeholder for future PAGH toggle
+        state = True
+    elif feature == "mute":
+        # Global mute logic could go here
+        state = False
+    else:
+        return {"status": "error", "message": "Unknown feature"}
+    
+    return {"status": "success", "feature": feature, "state": state}
+
+@app.get("/api/telemetry")
+async def get_telemetry():
+    """Expose high-speed engine telemetry to the dashboard."""
+    # Ensure all telemetry values are serializable
+    safe_telemetry = {}
+    for k, v in engine.telemetry.items():
+        if hasattr(v, "item"):
+            safe_telemetry[k] = float(v.item())
+        else:
+            try:
+                safe_telemetry[k] = float(v)
+            except:
+                safe_telemetry[k] = v
+    return safe_telemetry
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("main:app", host="127.0.0.1", port=8000, reload=True)
+    # Optimized for low-latency performance
+    uvicorn.run(app, host="0.0.0.0", port=8000, access_log=False)

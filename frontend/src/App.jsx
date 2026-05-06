@@ -6,34 +6,87 @@ function App() {
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState(null)
   
-  // Dynamic status states
+  // New States for Library and Telemetry
   const [backendStatus, setBackendStatus] = useState('Checking...')
   const [activePreset, setActivePreset] = useState('None')
+  const [artistLibrary, setArtistLibrary] = useState([])
+  const [telemetry, setTelemetry] = useState({ pitch: 440, rms: 0, active_fx: 0, cpu_load: 0 })
+  const [showTuner, setShowTuner] = useState(true)
+  const [ndeEnabled, setNdeEnabled] = useState(true) // NDE is on by default in engine
+  const [paghEnabled, setPaghEnabled] = useState(false)
 
-  // Check if backend is alive on load
+  // Initial Boot Sequence
   useEffect(() => {
-    const checkBackend = async () => {
+    const bootRig = async () => {
       try {
-        const response = await fetch('http://127.0.0.1:8000/')
-        if (response.ok) {
-          setBackendStatus('Connected')
-        } else {
-          setBackendStatus('Disconnected')
+        const [statusRes, libraryRes] = await Promise.all([
+          fetch('http://127.0.0.1:8000/'),
+          fetch('http://127.0.0.1:8000/api/tones/library')
+        ])
+        
+        if (statusRes.ok) setBackendStatus('Connected')
+        if (libraryRes.ok) {
+          const libData = await libraryRes.json()
+          setArtistLibrary(libData.artists)
         }
       } catch (error) {
         setBackendStatus('Disconnected')
       }
     }
-    checkBackend()
-    // Poll every 5 seconds
-    const interval = setInterval(checkBackend, 5000)
-    return () => clearInterval(interval)
+    bootRig()
+
+    // High-speed telemetry loop
+    const telInterval = setInterval(async () => {
+      try {
+        const res = await fetch('http://127.0.0.1:8000/api/telemetry')
+        if (res.ok) {
+          const data = await res.json()
+          setTelemetry(data)
+        }
+      } catch (e) {}
+    }, 100)
+
+    return () => clearInterval(telInterval)
   }, [])
+
+  const handleToggle = async (feature) => {
+    try {
+      const res = await fetch('http://127.0.0.1:8000/api/engine/toggle', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ feature })
+      })
+      const data = await res.json()
+      if (data.status === 'success') {
+        if (feature === 'nde') setNdeEnabled(data.state)
+        if (feature === 'pagh') setPaghEnabled(data.state)
+      }
+    } catch (e) {
+      console.error("Toggle failed:", e)
+    }
+  }
+
+  const handleArtistLoad = async (artistId) => {
+    setLoading(true)
+    try {
+      const res = await fetch('http://127.0.0.1:8000/api/tone/prompt', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt: `Load verified profile for ${artistId}` })
+      })
+      const data = await res.json()
+      setResult(data)
+      if (data.suggested_preset) setActivePreset(data.suggested_preset)
+    } catch (e) {
+      console.error(e)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const handleGenerateTone = async (e) => {
     e.preventDefault()
     if (!prompt.trim()) return
-
     setLoading(true)
     setResult(null)
 
@@ -43,20 +96,11 @@ function App() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ prompt })
       })
-      
       const data = await response.json()
       setResult(data)
-      
-      // Update the active preset if Gemini successfully mapped it
-      if (data.suggested_preset) {
-        setActivePreset(data.suggested_preset)
-      }
+      if (data.suggested_preset) setActivePreset(data.suggested_preset)
     } catch (error) {
-      console.error("Error connecting to Brain:", error)
-      setResult({ 
-        status: "error", 
-        message: "Failed to connect to Schillybeer Brain. Make sure your GEMINI_API_KEY is correct and the backend is running." 
-      })
+      setResult({ status: "error", message: "Brain Communication Failure." })
     } finally {
       setLoading(false)
     }
@@ -65,67 +109,110 @@ function App() {
   return (
     <div className="dashboard">
       <header>
+        <div className="status-badge" style={{ background: backendStatus === 'Connected' ? '#00ff8822' : '#ff4b4b22' }}>
+          <div className="status-dot" style={{ background: backendStatus === 'Connected' ? '#00ff88' : '#ff4b4b' }} />
+          {backendStatus}
+        </div>
         <h1>Schillybeer</h1>
-        <p className="subtitle">AI-Powered Smart Guitar Rig</p>
+        <p className="subtitle">Quantum Rig Control • Phase-Aligned DSP</p>
       </header>
 
+      {/* NEW: Utility Strip */}
+      <div className="utility-strip">
+        <button 
+          className={`util-btn ${showTuner ? 'active' : ''}`} 
+          onClick={() => setShowTuner(!showTuner)}
+        >
+          {showTuner ? 'HIDE TUNER' : 'SHOW TUNER'}
+        </button>
+        <button 
+          className={`util-btn ${ndeEnabled ? 'active' : ''}`} 
+          onClick={() => handleToggle('nde')}
+        >
+          NDE MODE
+        </button>
+        <button 
+          className={`util-btn ${paghEnabled ? 'active' : ''}`} 
+          onClick={() => handleToggle('pagh')}
+        >
+          PAGH GEN
+        </button>
+        <button className="util-btn mute" onClick={() => alert('Mute Engaged')}>
+          MASTER MUTE
+        </button>
+      </div>
+
       <main>
-        <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '2rem' }}>
+        <div className="grid-layout">
+          {/* Left Column: Core Controls */}
           <div className="left-column">
-            <section className="panel">
-              <h2>Tone Generator</h2>
-              <p>Describe the tone you want, and the AI Brain will configure your rig.</p>
-              
+            <section className="panel artist-vault">
+              <div className="panel-header">
+                <h2>Master Tone Library</h2>
+                <span className="badge">{artistLibrary.length} PROFILES</span>
+              </div>
+              <div className="artist-grid">
+                {artistLibrary.map(artist => (
+                  <button 
+                    key={artist.id} 
+                    className={`artist-card minimalist ${activePreset === artist.id ? 'active' : ''}`}
+                    onClick={() => handleArtistLoad(artist.id)}
+                    title={artist.description} // Hover description
+                    disabled={loading}
+                  >
+                    <div className="artist-name">{artist.name}</div>
+                  </button>
+                ))}
+              </div>
+            </section>
+
+            <section className="panel tone-brain">
+              <h2>Generative AI Brain</h2>
               <form onSubmit={handleGenerateTone} className="input-group">
                 <input 
                   type="text" 
-                  placeholder="e.g., 'Sparkly clean John Mayer tone with a touch of reverb'" 
+                  placeholder="e.g., 'SRV Blues but on a space ship with lasers'" 
                   value={prompt}
                   onChange={(e) => setPrompt(e.target.value)}
                   disabled={loading}
                 />
-                <button type="submit" disabled={loading}>
-                  {loading ? 'Dialing in...' : 'Get Tone'}
+                <button type="submit" className="pulse-btn" disabled={loading}>
+                  {loading ? 'CALCULATING...' : 'EVOLVE TONE'}
                 </button>
               </form>
-
               {result && (
-                <div className="result" style={{ borderColor: result.status === 'error' || result.detail ? '#ff4b4b' : 'var(--primary-color)' }}>
-                  {result.detail || result.message}
+                <div className="technical-log">
+                  <div className="log-header">SIGNAL CHAIN CONFIRMED</div>
+                  {result.message}
                 </div>
               )}
             </section>
-
-            <section className="panel" style={{ marginTop: '2rem' }}>
-              <h2>Current Rig Status</h2>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginTop: '1rem', color: 'var(--text-secondary)' }}>
-                <span>
-                  Backend: 
-                  <strong style={{ color: backendStatus === 'Connected' ? '#00f2fe' : '#ff4b4b', marginLeft: '8px' }}>
-                    {backendStatus}
-                  </strong>
-                </span>
-                <span>
-                  Audio Engine: 
-                  <strong style={{ color: backendStatus === 'Connected' ? '#00f2fe' : '#ff4b4b', marginLeft: '8px' }}>
-                    {backendStatus === 'Connected' ? 'Online' : 'Offline'}
-                  </strong>
-                </span>
-                <span>
-                  Active Preset: 
-                  <strong style={{ color: activePreset !== 'None' ? '#00f2fe' : 'inherit', marginLeft: '8px' }}>
-                    {activePreset.replace(/_/g, ' ')}
-                  </strong>
-                </span>
-              </div>
-            </section>
           </div>
 
+          {/* Right Column: Telemetry & Tuner */}
           <div className="right-column">
-            <section className="panel">
-              <h2>Smart Tuner</h2>
-              <Tuner />
+            <section className="panel telemetry-panel">
+              <h2>Quantum Telemetry</h2>
+              <div className="telemetry-grid">
+                <div className="metric">
+                  <label>Signal RMS</label>
+                  <div className="progress-bg">
+                    <div className="progress-bar" style={{ width: `${Math.min(telemetry.rms * 500, 100)}%` }} />
+                  </div>
+                </div>
+                <div className="metric">
+                  <label>Pitch Depth</label>
+                  <div className="value">{telemetry.pitch.toFixed(1)} Hz</div>
+                </div>
+              </div>
             </section>
+
+            {showTuner && (
+              <section className="panel tuner-panel">
+                <h2>Smart Tuner</h2>
+                <Tuner />
+              </section>
+            )}
           </div>
         </div>
       </main>
