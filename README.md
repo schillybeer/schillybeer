@@ -39,8 +39,12 @@ npm run dev
 ## 💎 Core Technologies
 *   **Gemini 3 Flash**: Generative DSP chain architecture.
 *   **Python Pedalboard**: High-performance C++ audio processing wrapper.
+*   **True Stereo Bus**: Supports advanced spatial processing (8D panning, dual chorusing).
+*   **NativeNAM Processing**: Seamless native loading of PyTorch `.nam` profiles for boutique amplifier modeling.
+*   **Custom DSP Blocks**: Including the mathematically optimized `SpatialRotary` (Leslie) LFO panner.
 *   **Neural Dynamic Expression (NDE)**: Real-time dynamic saturation.
 *   **Adaptive Transient Detection**: Level-aware effect triggering.
+*   **Visual Artist Mapping**: WYSIWYG translation of legendary guitarists into tactile, editable pedalboards.
 
 ---
 
