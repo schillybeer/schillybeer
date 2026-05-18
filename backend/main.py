@@ -251,23 +251,79 @@ def get_tone_library():
         ]
     }
 
+@app.post("/api/engine/reset")
+def reset_engine():
+    """Returns the rig to its fresh launch settings."""
+    engine.build_dynamic_board([])
+    engine.update_daisy_chain([], [])
+    engine.active_preset = "None"
+    return {"status": "success", "message": "Rig initialized"}
+
+@app.post("/api/engine/mute")
+def toggle_mute(request: dict):
+    """Mutes or unmutes the master output."""
+    mute = request.get("mute", False)
+    engine.master_gain = 0.0 if mute else 1.0
+    return {"status": "success", "muted": mute}
+
+@app.get("/api/tones/artist/{artist_id}")
+def get_artist_rig(artist_id: str):
+    """Fetches the visual stompbox rig for an artist and initializes the Amp block."""
+    if artist_id not in ARTIST_PRESETS:
+        raise HTTPException(status_code=404, detail="Artist not found")
+        
+    preset = ARTIST_PRESETS[artist_id]
+    
+    # Load the Core Amp and Cab block into the backend
+    amp_chain = [
+        {"effect": "NAM_Amp", "params": {}},
+        {"effect": "Convolution", "ir_name": "vintage_4x12.wav", "mix": 1.0}
+    ]
+    engine.build_dynamic_board(amp_chain)
+    engine.active_preset = artist_id.replace("_", " ").title()
+    
+    return {
+        "status": "success",
+        "visual_rig": preset.get("visual_rig", {"pre": [], "post": []})
+    }
+
 @app.post("/api/engine/toggle")
 def toggle_engine_feature(request: dict):
-    """Toggles specific engine features like NDE or PAGH."""
     feature = request.get("feature")
     if feature == "nde":
         engine.nde_enabled = not engine.nde_enabled
-        state = engine.nde_enabled
+        return {"status": "success", "feature": "nde", "state": engine.nde_enabled}
     elif feature == "pagh":
-        # Placeholder for future PAGH toggle
-        state = True
-    elif feature == "mute":
-        # Global mute logic could go here
-        state = False
-    else:
-        return {"status": "error", "message": "Unknown feature"}
-    
-    return {"status": "success", "feature": feature, "state": state}
+        engine.pagh_enabled = not engine.pagh_enabled
+        return {"status": "success", "feature": "pagh", "state": engine.pagh_enabled}
+    return {"status": "error", "message": "Unknown feature"}
+
+# --- STOMPBOX OVERRIDE API ---
+
+class PedalState(BaseModel):
+    id: str
+    type: str
+    enabled: bool
+    params: dict[str, float]
+
+class ChainUpdate(BaseModel):
+    pre: list[PedalState]
+    post: list[PedalState]
+
+@app.get("/api/pedals/state")
+def get_pedals_state():
+    return engine.manual_pedals_state
+
+@app.post("/api/pedals/update")
+def update_pedal(update: ChainUpdate):
+    try:
+        new_state = engine.update_daisy_chain(
+            pre_pedals=[p.dict() for p in update.pre],
+            post_pedals=[p.dict() for p in update.post]
+        )
+        return {"status": "success", "state": new_state}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/api/telemetry")
 async def get_telemetry():

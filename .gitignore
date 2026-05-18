@@ -20,3 +20,13 @@ dist/
 backend/irs/*.wav
 backend/plugins/*.vst3
 backend/NAM_Installer.zip
+backend/plugins/*.exe
+backend/plugins/*.pdf
+scratch/
+
+# Test/Debug Scripts
+backend/diag_out.txt
+backend/check_plugins.py
+backend/test_filter.py
+backend/test_pedal.py
+backend/update_tone_lib.py

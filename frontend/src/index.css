@@ -436,3 +436,452 @@ button:active {
   font-size: 0.9rem;
   color: var(--text-secondary);
 }
+
+/* --- STOMPBOX OVERRIDE UI (DAISY CHAIN) --- */
+.stompbox-board {
+  margin-bottom: 2rem;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 12px;
+  padding: 1rem;
+  border: 1px solid var(--border-color);
+}
+
+.pedal-adder {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  justify-content: center;
+}
+
+.pedal-adder select {
+  background: #111;
+  color: #00ff88;
+  border: 1px solid #00ff88;
+  padding: 8px;
+  border-radius: 4px;
+  font-family: monospace;
+}
+
+.pedal-adder button {
+  background: rgba(0, 255, 136, 0.1);
+  color: #00ff88;
+  border: 1px solid #00ff88;
+  padding: 8px 16px;
+  border-radius: 4px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.pedal-adder button:hover {
+  background: #00ff88;
+  color: #000;
+}
+
+.daisy-chain-container {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  overflow-x: auto;
+  padding-bottom: 1rem;
+}
+
+.pedal-stage {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.stage-label {
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+  letter-spacing: 2px;
+  text-align: center;
+}
+
+.pedal-row {
+  display: flex;
+  gap: 1rem;
+}
+
+.amp-block {
+  min-width: 200px;
+  height: 180px;
+  background: #1a1a1a;
+  border: 4px solid #333;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px;
+  position: relative;
+}
+
+.amp-grill {
+  width: 100%;
+  height: 100%;
+  background: repeating-linear-gradient(
+    45deg,
+    #222,
+    #222 5px,
+    #111 5px,
+    #111 10px
+  );
+  border: 2px solid #000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  box-shadow: inset 0 0 20px rgba(0,0,0,0.8);
+}
+
+.amp-grill h3 {
+  color: #eee;
+  text-shadow: 0 2px 4px #000;
+  margin: 0 0 10px 0;
+  text-align: center;
+  font-size: 1rem;
+}
+
+.amp-status {
+  background: rgba(0, 255, 136, 0.2);
+  color: #00ff88;
+  padding: 4px 8px;
+  font-size: 0.6rem;
+  border-radius: 4px;
+  border: 1px solid #00ff88;
+}
+
+/* Sleek Glassmorphic Pedal Base */
+/* Blocky, Modernized Physical Pedal Enclosure */
+.stompbox {
+  min-width: min-content;
+  background: linear-gradient(145deg, #333, #111);
+  border: 2px solid #0a0a0a;
+  border-top: 2px solid #444;
+  border-left: 2px solid #3a3a3a;
+  border-radius: 6px; /* Blockier, realistic enclosure */
+  padding: 1.5rem 1.2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.2rem;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  position: relative;
+  overflow: hidden;
+  box-shadow: 
+    10px 15px 25px rgba(0,0,0,0.8), 
+    inset 0 -5px 15px rgba(0,0,0,0.9);
+}
+
+/* Brushed Metal Texture Layer */
+.stompbox::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-image: repeating-linear-gradient(
+    90deg,
+    transparent,
+    transparent 1px,
+    rgba(255,255,255,0.015) 1px,
+    rgba(255,255,255,0.015) 2px
+  );
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* The Signature Color Overlay (mix-blend-mode to tint the metal) */
+.stompbox::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: var(--pedal-color);
+  opacity: 0.15; /* Subtle tint when off */
+  mix-blend-mode: overlay;
+  transition: opacity 0.3s ease;
+  z-index: 0;
+}
+
+.stompbox.active {
+  box-shadow: 
+    10px 15px 30px rgba(0,0,0,0.9), 
+    0 0 20px rgba(255,255,255,0.05),
+    inset 0 2px 10px rgba(255,255,255,0.1);
+  transform: translateY(-2px); /* Slight lift when engaged */
+}
+
+.stompbox.active::before {
+  opacity: 0.25; /* Subdued color tint when active */
+}
+
+/* Ensure UI elements sit above the texture/color layers */
+.stompbox > * {
+  z-index: 1;
+}
+
+.stomp-controls-top {
+  display: flex;
+  width: 100%;
+  justify-content: space-between;
+  margin-bottom: -15px;
+}
+
+.stomp-controls-top button {
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.2);
+  cursor: pointer;
+  font-size: 0.65rem;
+  transition: color 0.2s;
+  padding: 0;
+}
+
+.stomp-controls-top button:hover {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.stomp-controls-top .delete-btn:hover {
+  color: #ff4b4b;
+}
+
+.faders-container {
+  display: flex;
+  flex-direction: row;
+  gap: 12px;
+  width: 100%;
+  justify-content: center;
+}
+
+.stompbox-title {
+  font-size: 0.95rem;
+  font-weight: 900;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: #888;
+  text-shadow: 0 -1px 1px #000;
+  font-family: 'Inter', sans-serif;
+  transition: all 0.3s;
+  background: rgba(0,0,0,0.3);
+  padding: 4px 10px;
+  border-radius: 3px;
+  border: 1px solid rgba(255,255,255,0.05);
+}
+
+.stompbox.active .stompbox-title {
+  color: #fff;
+  text-shadow: 0 0 3px var(--pedal-color);
+  border-color: rgba(255,255,255,0.2);
+}
+
+/* Premium Tactile Switch (Sleeker, smaller button) */
+.stomp-switch {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, #e0e0e0, #888);
+  border: 3px solid #050505;
+  box-shadow: 
+    0 4px 8px rgba(0,0,0,0.8), 
+    inset 0 -2px 4px rgba(0,0,0,0.6),
+    inset 0 2px 2px rgba(255,255,255,0.9);
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: all 0.1s;
+}
+
+.stomp-switch:active {
+  transform: scale(0.92) translateY(2px);
+  box-shadow: 
+    0 2px 3px rgba(0,0,0,0.6), 
+    inset 0 4px 8px rgba(0,0,0,0.9);
+}
+
+/* Jewel LED Indicator */
+.stomp-led {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #222;
+  border: 2px solid #111;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.8);
+  margin-top: -65px; /* Above switch */
+  position: absolute;
+  transition: all 0.2s ease-out;
+}
+
+.stompbox.active .stomp-led {
+  background: var(--pedal-color, #00ff88);
+  border-color: #fff;
+  box-shadow: 
+    0 0 15px var(--pedal-color), 
+    0 0 30px var(--pedal-color),
+    inset 0 0 5px rgba(255,255,255,0.8);
+}
+
+/* Sleek DJ-Style Vertical Fader */
+.stomp-dial {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  background: rgba(0,0,0,0.4);
+  padding: 15px 10px;
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.05);
+  box-shadow: inset 0 4px 10px rgba(0,0,0,0.8);
+}
+
+.fader-wrapper {
+  width: 34px;
+  height: 80px;
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.stomp-dial label {
+  font-size: 0.75rem;
+  color: #888;
+  font-family: 'Inter', monospace;
+  font-weight: 700;
+  letter-spacing: 1px;
+  transition: color 0.3s;
+  margin-top: 5px;
+}
+
+.stompbox.active .stomp-dial label {
+  color: #fff;
+  text-shadow: 0 0 5px var(--pedal-color);
+}
+
+.stomp-dial input[type=range] {
+  -webkit-appearance: none;
+  position: absolute;
+  width: 80px; /* Translates to visual height due to rotation */
+  height: 34px; /* Translates to visual width */
+  margin: 0;
+  transform: rotate(-90deg);
+  background: transparent;
+  outline: none;
+}
+
+.stomp-dial input[type=range]::-webkit-slider-runnable-track {
+  width: 100%;
+  height: 8px; /* Visual track width */
+  cursor: pointer;
+  background: #050505;
+  border-radius: 4px;
+  box-shadow: inset 0 2px 5px rgba(0,0,0,0.9), 0 0 1px rgba(255,255,255,0.1);
+  border: 1px solid #000;
+  transition: all 0.3s;
+}
+
+.stompbox.active .stomp-dial input[type=range]::-webkit-slider-runnable-track {
+  box-shadow: inset 0 0 8px var(--pedal-color), 0 0 2px rgba(255,255,255,0.2);
+}
+
+/* Fader Cap (Thumb) */
+.stomp-dial input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  height: 28px; /* Visual width of the fader cap */
+  width: 16px; /* Visual height of the fader cap along the track */
+  border-radius: 2px;
+  
+  /* The line running across the cap */
+  background: 
+    linear-gradient(to bottom, transparent 46%, #fff 46%, #fff 54%, transparent 54%),
+    linear-gradient(to right, #222, #555, #888, #555, #222);
+    
+  cursor: grab;
+  margin-top: -10px; /* Center it on the 8px track */
+  border: 1px solid #111;
+  border-left: 1px solid #555;
+  border-right: 1px solid #000;
+  
+  /* Shadow falls 'down' visually */
+  box-shadow: -3px 0 5px rgba(0,0,0,0.8);
+  transition: background 0.3s;
+}
+
+.stompbox.active .stomp-dial input[type=range]::-webkit-slider-thumb {
+  background: 
+    linear-gradient(to bottom, transparent 46%, var(--pedal-color) 46%, var(--pedal-color) 54%, transparent 54%),
+    linear-gradient(to right, #333, #666, #999, #666, #333);
+  box-shadow: 
+    -3px 0 5px rgba(0,0,0,0.8),
+    0 0 10px var(--pedal-color);
+}
+
+.stomp-dial input[type=range]:active::-webkit-slider-thumb {
+  cursor: grabbing;
+}
+
+/* Master Control Strip */
+.master-controls-strip {
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
+  margin-bottom: 2rem;
+  padding: 1.5rem;
+  background: rgba(0, 0, 0, 0.4);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: inset 0 0 20px rgba(0,0,0,0.5);
+}
+
+.master-action-btn {
+  font-family: 'Inter', sans-serif;
+  font-size: 1.1rem;
+  font-weight: 900;
+  letter-spacing: 2px;
+  padding: 12px 30px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  text-transform: uppercase;
+}
+
+.master-action-btn.reset {
+  background: #1a0f0f;
+  color: #ffaa00;
+  border: 2px solid #ffaa00;
+  box-shadow: inset 0 0 10px rgba(255, 170, 0, 0.2);
+}
+
+.master-action-btn.reset:hover {
+  background: #ffaa00;
+  color: #000;
+  box-shadow: 0 0 20px rgba(255, 170, 0, 0.6);
+  transform: translateY(-2px);
+}
+
+.master-action-btn.mute {
+  background: #2a0000;
+  color: #ff3333;
+  border: 2px solid #ff3333;
+  box-shadow: inset 0 0 10px rgba(255, 0, 0, 0.2);
+}
+
+.master-action-btn.mute:hover {
+  background: #ff3333;
+  color: #fff;
+  box-shadow: 0 0 20px rgba(255, 51, 51, 0.6);
+  transform: translateY(-2px);
+}
+
+.master-action-btn.mute.active {
+  background: #ff3333;
+  color: #fff;
+  box-shadow: 0 0 30px rgba(255, 51, 51, 0.8);
+  animation: pulse-red 2s infinite;
+}
+
+@keyframes pulse-red {
+  0% { box-shadow: 0 0 20px rgba(255, 51, 51, 0.6); }
+  50% { box-shadow: 0 0 40px rgba(255, 51, 51, 0.9); }
+  100% { box-shadow: 0 0 20px rgba(255, 51, 51, 0.6); }
+}
